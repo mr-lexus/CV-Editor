@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { CV } from '@/entities/cv/model/types'
 import { cn } from '@/shared/lib/cn'
 import {
@@ -156,7 +156,7 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
   return (
     <article
       id="cv-document"
-      className={cn('cv-document bg-white text-gray-800', mode === 'preview' && 'shadow-xl')}
+      className={cn('cv-document min-w-0 w-full bg-white text-gray-800', mode === 'preview' && 'shadow-xl')}
       data-render-mode={mode}
     >
       <header className="cv-page-block flex flex-row items-start space-x-6 border-b-2 border-gray-800 pb-6">
@@ -243,7 +243,7 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
       </header>
 
       {personalInfo.summary && (
-        <section className="cv-flow-section cv-page-block">
+        <section className="cv-flow-section cv-page-block min-w-0 w-full">
           <h2 className="mb-3 border-b border-gray-200 pb-1 text-lg font-bold uppercase tracking-widest text-gray-900">
             Professional Summary
           </h2>
@@ -290,15 +290,14 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
       )}
 
       {skills.length > 0 && (
-        <section className="cv-flow-section cv-page-block">
+        <section className="cv-flow-section cv-page-block min-w-0 w-full">
           <h2 className="mb-4 border-b border-gray-200 pb-1 text-lg font-bold uppercase tracking-widest text-gray-900">
             Skills
           </h2>
-          <div className="text-sm leading-relaxed text-gray-800">
-            {skills.map((skill, index) => (
-              <span key={skill.id}>
-                <span className="font-medium">{skill.name}</span>
-                {index < skills.length - 1 && <span className="mx-2 text-gray-300">|</span>}
+          <div className="flex min-w-0 w-full flex-wrap gap-x-3 gap-y-1 text-sm leading-relaxed text-gray-800">
+            {skills.map((skill) => (
+              <span key={skill.id} className="max-w-full break-words font-medium">
+                {skill.name}
               </span>
             ))}
           </div>

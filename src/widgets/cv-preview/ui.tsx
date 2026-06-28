@@ -16,7 +16,7 @@ export const CVPreview = ({ cv, mode = 'preview', className }: CVPreviewProps) =
   return (
     <div
       className={cn(
-        'cv-preview-shell flex w-full justify-center',
+        'cv-preview-shell flex min-w-0 w-full justify-center',
         mode === 'print' ? 'bg-white' : 'min-h-screen overflow-y-auto bg-gray-100 p-8',
         className,
       )}

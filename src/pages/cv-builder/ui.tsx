@@ -14,11 +14,11 @@ export const CVBuilderPage = () => {
         </div>
       </div>
 
-      <div className="cv-preview-pane relative hidden flex-1 flex-col overflow-hidden bg-gray-100 md:flex">
+      <div className="cv-preview-pane relative hidden min-w-0 flex-1 flex-col overflow-hidden bg-gray-100 md:flex">
         <div className="cv-preview-toolbar absolute right-8 top-4 z-20">
           <ExportPDF />
         </div>
-        <div className="cv-preview-scroll flex-1 overflow-y-auto">
+        <div className="cv-preview-scroll min-w-0 flex-1 overflow-y-auto">
           <CVPreview />
         </div>
       </div>
