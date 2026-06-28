@@ -1,0 +1,50 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">CV Generator Open Graph Image</title>
+  <desc id="desc">Preview card for CV Generator with a document illustration and short marketing text.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#eef4ff" />
+      <stop offset="100%" stop-color="#dbeafe" />
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <circle cx="1120" cy="72" r="110" fill="#ffffff" opacity="0.35" />
+  <circle cx="88" cy="560" r="120" fill="#bfdbfe" opacity="0.35" />
+
+  <rect x="48" y="44" width="1104" height="542" rx="34" fill="#ffffff" filter="url(#shadow)" />
+
+  <rect x="92" y="94" width="360" height="442" rx="30" fill="url(#card)" />
+  <circle cx="188" cy="188" r="58" fill="#ffffff" opacity="0.14" />
+  <rect x="148" y="314" width="210" height="16" rx="8" fill="#93c5fd" />
+  <rect x="148" y="350" width="164" height="16" rx="8" fill="#93c5fd" opacity="0.9" />
+  <rect x="148" y="386" width="186" height="16" rx="8" fill="#93c5fd" opacity="0.7" />
+  <rect x="148" y="450" width="96" height="34" rx="17" fill="#ffffff" opacity="0.12" />
+  <text x="196" y="473" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#ffffff">CV</text>
+
+  <text x="520" y="188" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="700" fill="#0f172a">CV Generator</text>
+  <text x="520" y="254" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="500" fill="#334155">Create a professional resume online</text>
+
+  <text x="520" y="332" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#475569">
+    <tspan x="520" dy="0">Build a polished CV, customize every section,</tspan>
+    <tspan x="520" dy="40">and export a clean PDF in minutes.</tspan>
+  </text>
+
+  <rect x="520" y="406" width="218" height="60" rx="18" fill="url(#chip)" />
+  <text x="629" y="445" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" text-anchor="middle" fill="#ffffff">Export PDF</text>
+
+  <rect x="520" y="502" width="190" height="16" rx="8" fill="#cbd5e1" />
+  <rect x="726" y="502" width="148" height="16" rx="8" fill="#dbeafe" />
+  <rect x="890" y="502" width="122" height="16" rx="8" fill="#cbd5e1" opacity="0.65" />
+</svg>
