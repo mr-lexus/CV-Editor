@@ -1,16 +1,15 @@
 import { CVBuilderPage } from '@/pages/cv-builder'
 import { CVPrintPreviewPage } from '@/pages/cv-print-preview/ui'
+import { getRenderModeFromSearch, isPrintPreviewPath } from '@/shared/lib/cv-render-data'
 
-function isPrintPreviewRoute(pathname: string): boolean {
-  return pathname === '/cv/preview'
+function shouldRenderPrintPreview(pathname: string, search: string): boolean {
+  return getRenderModeFromSearch(search) === 'print' || isPrintPreviewPath(pathname)
 }
 
 export function App() {
-  return (
-    isPrintPreviewRoute(window.location.pathname)
-      ? <CVPrintPreviewPage />
-      : <CVBuilderPage />
-  )
+  return shouldRenderPrintPreview(window.location.pathname, window.location.search)
+    ? <CVPrintPreviewPage />
+    : <CVBuilderPage />
 }
 
 export default App

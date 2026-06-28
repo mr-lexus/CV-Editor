@@ -1,16 +1,33 @@
-import puppeteer, { type Browser } from 'puppeteer'
+import type { Browser } from 'puppeteer-core'
 
-const launchArgs = ['--no-sandbox', '--disable-setuid-sandbox']
+const localLaunchArgs = ['--no-sandbox', '--disable-setuid-sandbox']
 
 let browserPromise: Promise<Browser> | null = null
 
+async function launchBrowser(): Promise<Browser> {
+  if (process.env.VERCEL) {
+    const chromium = (await import('@sparticuz/chromium')).default
+    const puppeteer = await import('puppeteer-core')
+
+    return puppeteer.launch({
+      args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    })
+  }
+
+  const puppeteer = await import('puppeteer')
+
+  return puppeteer.default.launch({
+    headless: true,
+    args: localLaunchArgs,
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+  })
+}
+
 export async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
-    browserPromise = puppeteer.launch({
-      headless: true,
-      args: launchArgs,
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-    }).catch((error) => {
+    browserPromise = launchBrowser().catch((error) => {
       browserPromise = null
       throw error
     })

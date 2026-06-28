@@ -9,9 +9,11 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^138.0.2",
     "cors": "^2.8.5",
     "express": "^4.21.2",
-    "puppeteer": "^24.12.1"
+    "puppeteer": "^24.12.1",
+    "puppeteer-core": "^24.12.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

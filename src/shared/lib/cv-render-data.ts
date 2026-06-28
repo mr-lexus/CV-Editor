@@ -4,6 +4,14 @@ import type { RenderMode } from '@/shared/ui/CVHtmlDocument'
 
 const PREVIEW_DATA_PARAM = 'data'
 const PRINT_MODE = 'print'
+const PRINT_PREVIEW_PATH = '/cv/preview'
+const baseUrl = import.meta.env.BASE_URL || '/'
+
+const configuredPdfApiUrl = import.meta.env.VITE_PDF_API_URL
+
+if (configuredPdfApiUrl && !/^https?:\/\//.test(configuredPdfApiUrl)) {
+  throw new Error('VITE_PDF_API_URL must be an absolute URL when provided.')
+}
 
 declare global {
   interface Window {
@@ -151,7 +159,7 @@ export function encodeCVData(cv: CV): string {
 }
 
 export function buildCVPreviewUrl(origin: string, cv?: CV): string {
-  const previewUrl = new URL('/cv/preview', origin)
+  const previewUrl = new URL(baseUrl, origin)
   previewUrl.searchParams.set('mode', PRINT_MODE)
 
   if (cv) {
@@ -159,6 +167,11 @@ export function buildCVPreviewUrl(origin: string, cv?: CV): string {
   }
 
   return previewUrl.toString()
+}
+
+export function isPrintPreviewPath(pathname: string): boolean {
+  const normalizedPath = pathname.replace(/\/+$/, '') || '/'
+  return normalizedPath.endsWith(PRINT_PREVIEW_PATH)
 }
 
 export function readCVDataFromSearch(search: string): CV {
@@ -170,4 +183,4 @@ export function getRenderModeFromSearch(search: string): RenderMode {
   return params.get('mode') === PRINT_MODE ? PRINT_MODE : 'preview'
 }
 
-export const PDF_API_ENDPOINT = '/api/pdf/generate'
+export const PDF_API_ENDPOINT = configuredPdfApiUrl || '/api/pdf/generate'

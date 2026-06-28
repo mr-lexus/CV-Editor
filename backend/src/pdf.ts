@@ -25,16 +25,17 @@ export async function generatePdfBuffer({ data, html, url }: GeneratePdfOptions)
 
     if (url) {
       await page.goto(url, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'domcontentloaded',
       })
     } else if (html) {
       await page.setContent(html, {
-        waitUntil: 'networkidle0',
+        waitUntil: 'domcontentloaded',
       })
     } else {
       throw new Error('Either html or url must be provided.')
     }
 
+    await page.waitForNetworkIdle().catch(() => undefined)
     await page.emulateMediaType('screen')
     await page.waitForFunction(() => Boolean(document.querySelector('#cv-document')), {
       timeout: 10000,

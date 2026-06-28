@@ -2,54 +2,29 @@ import cors from 'cors'
 import express from 'express'
 import { closeBrowser } from './browser.js'
 import { generatePdfBuffer } from './pdf.js'
-
-interface GeneratePdfBody {
-  data?: unknown
-  fileName?: unknown
-  html?: unknown
-  url?: unknown
-}
-
-function getAllowedTargetOrigins(): string[] {
-  const rawOrigins = process.env.ALLOWED_TARGET_ORIGINS || ''
-
-  return rawOrigins
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean)
-}
-
-function sanitizeFileName(input: string): string {
-  const safeName = input
-    .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-
-  const fileName = safeName || 'cv.pdf'
-  return fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`
-}
-
-function isAllowedUrl(rawUrl: string, allowedOrigins: string[]): boolean {
-  const parsedUrl = new URL(rawUrl)
-
-  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-    return false
-  }
-
-  if (allowedOrigins.length === 0) {
-    return true
-  }
-
-  return allowedOrigins.includes(parsedUrl.origin)
-}
+import {
+  type GeneratePdfBody,
+  isAllowedOrigin,
+  isAllowedUrl,
+  readAllowedOrigins,
+  sanitizeFileName,
+} from './http.js'
 
 const port = Number(process.env.PORT || 3001)
-const frontendOrigin = process.env.FRONTEND_ORIGIN
-const allowedTargetOrigins = getAllowedTargetOrigins()
+const frontendOrigins = readAllowedOrigins(process.env.FRONTEND_ORIGIN)
+const allowedTargetOrigins = readAllowedOrigins(process.env.ALLOWED_TARGET_ORIGINS)
 const app = express()
 
-if (frontendOrigin) {
-  app.use(cors({ origin: frontendOrigin }))
-}
+app.use(cors({
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin, frontendOrigins)) {
+      callback(null, true)
+      return
+    }
+
+    callback(new Error('Origin is not allowed by CORS.'))
+  },
+}))
 
 app.use(express.json({ limit: '10mb' }))
 

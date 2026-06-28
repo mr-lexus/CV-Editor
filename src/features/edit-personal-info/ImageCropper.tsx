@@ -24,21 +24,6 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
     const img = new Image()
     img.onload = () => {
       imageRef.current = img
-
-      // Auto-scale to cover the canvas initially
-      const size = 256
-      const imgRatio = img.width / img.height
-      let initialScale = 1
-      if (imgRatio > 1) {
-        // wider than tall
-        initialScale = size / img.height
-      } else {
-        // taller than wide
-        initialScale = size / img.width
-      }
-
-      // Adjust scale so it fits inside 256 area
-      // Our canvas draw multiplies drawWidth by scale, so we normalize scale around 1
       setScale(1)
       draw(1, { x: 0, y: 0 }, img)
     }
@@ -61,9 +46,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
     ctx.fillStyle = '#fff'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-    const size = canvas.width // 256
-
-    // Base cover dimensions
+    const size = canvas.width
     const imgRatio = img.width / img.height
     let drawWidth = size
     let drawHeight = size
@@ -74,7 +57,6 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
       drawHeight = drawWidth / imgRatio
     }
 
-    // Apply zoom
     drawWidth *= currentScale
     drawHeight *= currentScale
 
@@ -143,17 +125,21 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
           </label>
           <input
             type="range"
-            min="0.5"
+            min="1"
             max="3"
-            step="0.05"
+            step="0.01"
             value={scale}
-            onChange={(e) => setScale(parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            onChange={(e) => setScale(Number(e.target.value))}
+            className="w-full accent-blue-600"
           />
         </div>
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 font-medium text-sm transition-colors text-gray-700">Cancel</button>
-          <button type="button" onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium text-sm transition-colors">Crop & Save</button>
+          <button onClick={onCancel} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
+            Cancel
+          </button>
+          <button onClick={handleSave} className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
+            Save
+          </button>
         </div>
       </div>
     </div>

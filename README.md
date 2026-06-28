@@ -5,7 +5,7 @@ Online CV editor with live preview and PDF export.
 ## Demo
 
 - GitHub Pages: [https://mr-lexus.github.io/CV-Editor/](https://mr-lexus.github.io/CV-Editor/)
-- Repository: [git@github.com:mr-lexus/CV-Editor.git](git@github.com:mr-lexus/CV-Editor.git)
+- Repository: [https://github.com/mr-lexus/CV-Editor](https://github.com/mr-lexus/CV-Editor)
 
 ## Features
 
@@ -24,7 +24,8 @@ Online CV editor with live preview and PDF export.
 - Tailwind CSS
 - Zustand
 - React Hook Form + Zod
-- Express + Puppeteer for PDF generation
+- Express + Puppeteer for local PDF generation
+- Vercel serverless function for production PDF generation
 
 ## Getting Started
 
@@ -73,26 +74,55 @@ npm run build:backend
 npm run start:backend
 ```
 
-## Environment Notes
+## Environment Variables
 
-The frontend proxies `/api` requests to the PDF backend. You can override the backend target with:
+### Frontend
 
-```bash
-VITE_PDF_BACKEND_URL=http://localhost:3001
-```
+- `VITE_BASE_PATH` - base path for static deployment, for example `/CV-Editor/`
+- `VITE_PDF_BACKEND_URL` - local dev proxy target for Vite, for example `http://localhost:3001`
+- `VITE_PDF_API_URL` - absolute production PDF endpoint, for example `https://your-backend.vercel.app/api/pdf/generate`
 
-The backend also supports these environment variables:
+### Backend
 
 - `PORT`
 - `FRONTEND_ORIGIN`
 - `ALLOWED_TARGET_ORIGINS`
 - `PUPPETEER_EXECUTABLE_PATH`
 
+`FRONTEND_ORIGIN` and `ALLOWED_TARGET_ORIGINS` support comma-separated values.
+
+## Deployment
+
+### GitHub Pages
+
+The repository already includes a workflow at `.github/workflows/deploy-pages.yml`.
+
+Required repository variable:
+
+```text
+VITE_PDF_API_URL=https://your-backend.vercel.app/api/pdf/generate
+```
+
+### Vercel Backend
+
+Deploy the `backend` directory as a separate Vercel project.
+
+Required environment variables in Vercel:
+
+```text
+FRONTEND_ORIGIN=https://mr-lexus.github.io
+ALLOWED_TARGET_ORIGINS=https://mr-lexus.github.io
+```
+
+If you later use a custom domain, update both values to that domain.
+
 ## Project Structure
 
 ```text
 .
-|- src/        # React application
-|- backend/    # Express + Puppeteer PDF service
-|- public/     # Static assets
+|- src/                    # React application
+|- backend/src/            # Local Express + PDF service
+|- backend/api/            # Vercel serverless API handlers
+|- public/                 # Static assets
+|- .github/workflows/      # GitHub Pages deployment workflow
 ```
