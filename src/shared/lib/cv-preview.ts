@@ -66,6 +66,19 @@ function normalizeExperience(value: unknown, index: number): CV['experience'][nu
   }
 }
 
+function normalizeOpenSourceProject(value: unknown, index: number): CV['openSourceProjects'][number] | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  return {
+    id: readString(value.id) || `open-source-project-${index}`,
+    link: readString(value.link),
+    logoUrl: readString(value.logoUrl),
+    description: readString(value.description),
+  }
+}
+
 function normalizeEducation(value: unknown, index: number): CV['education'][number] | null {
   if (!isRecord(value)) {
     return null
@@ -79,6 +92,18 @@ function normalizeEducation(value: unknown, index: number): CV['education'][numb
     startDate: readString(value.startDate),
     endDate: readString(value.endDate),
     description: readString(value.description),
+  }
+}
+
+function normalizeLanguage(value: unknown, index: number): CV['languages'][number] | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  return {
+    id: readString(value.id) || `language-${index}`,
+    name: readString(value.name),
+    level: readString(value.level),
   }
 }
 
@@ -122,10 +147,20 @@ function normalizeCV(value: unknown): CV {
           .map((entry, index) => normalizeExperience(entry, index))
           .filter((entry): entry is CV['experience'][number] => entry !== null)
       : [],
+    openSourceProjects: Array.isArray(value.openSourceProjects)
+      ? value.openSourceProjects
+          .map((entry, index) => normalizeOpenSourceProject(entry, index))
+          .filter((entry): entry is CV['openSourceProjects'][number] => entry !== null)
+      : [],
     education: Array.isArray(value.education)
       ? value.education
           .map((entry, index) => normalizeEducation(entry, index))
           .filter((entry): entry is CV['education'][number] => entry !== null)
+      : [],
+    languages: Array.isArray(value.languages)
+      ? value.languages
+          .map((entry, index) => normalizeLanguage(entry, index))
+          .filter((entry): entry is CV['languages'][number] => entry !== null)
       : [],
     skills: Array.isArray(value.skills)
       ? value.skills

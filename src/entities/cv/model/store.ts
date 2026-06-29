@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { CV, Experience, Education, PersonalInfo, Skill } from './types'
+import { CV, Education, Experience, Language, OpenSourceProject, PersonalInfo, Skill } from './types'
 
 interface CVState {
   cv: CV
@@ -8,9 +8,14 @@ interface CVState {
   addExperience: (exp: Experience) => void
   updateExperience: (id: string, exp: Partial<Experience>) => void
   removeExperience: (id: string) => void
+  addOpenSourceProject: (project: OpenSourceProject) => void
+  updateOpenSourceProject: (id: string, project: Partial<OpenSourceProject>) => void
+  removeOpenSourceProject: (id: string) => void
   addEducation: (edu: Education) => void
   updateEducation: (id: string, edu: Partial<Education>) => void
   removeEducation: (id: string) => void
+  addLanguage: (language: Language) => void
+  removeLanguage: (id: string) => void
   addSkill: (skill: Skill) => void
   removeSkill: (id: string) => void
   resetCV: () => void
@@ -33,7 +38,9 @@ const initialState: CV = {
     photoShape: 'round',
   },
   experience: [],
+  openSourceProjects: [],
   education: [],
+  languages: [],
   skills: [],
 }
 
@@ -59,6 +66,29 @@ export const useCVStore = create<CVState>()(
             experience: (state.cv.experience || []).filter((e) => e.id !== id),
           },
         })),
+      addOpenSourceProject: (project) =>
+        set((state) => ({
+          cv: {
+            ...state.cv,
+            openSourceProjects: [...(state.cv.openSourceProjects || []), project],
+          },
+        })),
+      updateOpenSourceProject: (id, project) =>
+        set((state) => ({
+          cv: {
+            ...state.cv,
+            openSourceProjects: (state.cv.openSourceProjects || []).map((entry) => (
+              entry.id === id ? { ...entry, ...project } : entry
+            )),
+          },
+        })),
+      removeOpenSourceProject: (id) =>
+        set((state) => ({
+          cv: {
+            ...state.cv,
+            openSourceProjects: (state.cv.openSourceProjects || []).filter((entry) => entry.id !== id),
+          },
+        })),
       addEducation: (edu) =>
         set((state) => ({ cv: { ...state.cv, education: [...(state.cv.education || []), edu] } })),
       updateEducation: (id, edu) =>
@@ -75,6 +105,14 @@ export const useCVStore = create<CVState>()(
             education: (state.cv.education || []).filter((e) => e.id !== id),
           },
         })),
+      addLanguage: (language) =>
+        set((state) => ({
+          cv: { ...state.cv, languages: [...(state.cv.languages || []), language] },
+        })),
+      removeLanguage: (id) =>
+        set((state) => ({
+          cv: { ...state.cv, languages: (state.cv.languages || []).filter((language) => language.id !== id) },
+        })),
       addSkill: (skill) =>
         set((state) => ({ cv: { ...state.cv, skills: [...(state.cv.skills || []), skill] } })),
       removeSkill: (id) =>
@@ -85,6 +123,32 @@ export const useCVStore = create<CVState>()(
     }),
     {
       name: 'cv-storage',
+      merge: (persistedState, currentState) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return currentState
+        }
+
+        const persisted = persistedState as Partial<CVState>
+        const persistedCV = persisted.cv ?? currentState.cv
+
+        return {
+          ...currentState,
+          ...persisted,
+          cv: {
+            ...initialState,
+            ...persistedCV,
+            personalInfo: {
+              ...initialState.personalInfo,
+              ...(persistedCV?.personalInfo ?? {}),
+            },
+            experience: persistedCV?.experience ?? initialState.experience,
+            openSourceProjects: persistedCV?.openSourceProjects ?? initialState.openSourceProjects,
+            education: persistedCV?.education ?? initialState.education,
+            languages: persistedCV?.languages ?? initialState.languages,
+            skills: persistedCV?.skills ?? initialState.skills,
+          },
+        }
+      },
     }
   )
 )

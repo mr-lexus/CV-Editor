@@ -17,6 +17,8 @@ export const emptyCV: CV = {
     photoShape: 'round',
   },
   experience: [],
+  openSourceProjects: [],
   education: [],
+  languages: [],
   skills: [],
 }

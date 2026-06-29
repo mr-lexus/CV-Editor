@@ -25,6 +25,12 @@ export const experienceSchema = z.object({
   description: z.string().optional(),
 })
 
+export const openSourceProjectSchema = z.object({
+  link: z.string().min(1, 'Project link is required'),
+  logoUrl: z.string().optional(),
+  description: z.string().optional(),
+})
+
 export const educationSchema = z.object({
   institution: z.string().min(1, 'Institution is required'),
   logoUrl: z.string().optional(),
@@ -32,6 +38,11 @@ export const educationSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional(),
   description: z.string().optional(),
+})
+
+export const languageSchema = z.object({
+  name: z.string().min(1, 'Language is required'),
+  level: z.string().min(1, 'Level is required'),
 })
 
 export const skillSchema = z.object({

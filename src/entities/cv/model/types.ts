@@ -29,6 +29,19 @@ export interface Skill {
   name: string
 }
 
+export interface Language {
+  id: string
+  name: string
+  level: string
+}
+
+export interface OpenSourceProject {
+  id: string
+  link: string
+  logoUrl?: string
+  description: string
+}
+
 export interface Education {
   id: string
   institution: string
@@ -42,6 +55,8 @@ export interface Education {
 export interface CV {
   personalInfo: PersonalInfo
   experience: Experience[]
+  openSourceProjects: OpenSourceProject[]
   education: Education[]
+  languages: Language[]
   skills: Skill[]
 }

@@ -97,6 +97,37 @@ function formatDateRange(startDate?: string, endDate?: string): string {
   return `${formattedStart} - ${formattedEnd}`
 }
 
+function normalizeProjectLink(link: string): string {
+  if (!link) {
+    return ''
+  }
+
+  return /^https?:\/\//i.test(link) ? link : `https://${link}`
+}
+
+function getProjectLabel(link: string): string {
+  if (!link) {
+    return 'Project Link'
+  }
+
+  try {
+    const url = new URL(normalizeProjectLink(link))
+    const pathSegments = url.pathname.split('/').filter(Boolean)
+
+    if (pathSegments.length >= 2) {
+      return `${pathSegments[pathSegments.length - 2]}/${pathSegments[pathSegments.length - 1]}`
+    }
+
+    if (pathSegments.length === 1) {
+      return pathSegments[0]
+    }
+
+    return url.hostname
+  } catch {
+    return link
+  }
+}
+
 const ExperienceItem = ({ exp, className }: { exp: CV['experience'][number]; className?: string }) => (
   <div className={className}>
     <div className="flex items-start gap-3">
@@ -108,9 +139,7 @@ const ExperienceItem = ({ exp, className }: { exp: CV['experience'][number]; cla
             {formatDateRange(exp.startDate, exp.endDate)}
           </span>
         </div>
-        <div className="mb-2 text-md font-medium text-blue-600">
-          {exp.company || 'Company Name'}
-        </div>
+        <div className="mb-2 text-md font-medium text-blue-600">{exp.company || 'Company Name'}</div>
         {exp.description && (
           <div className="cv-long-text">
             <MarkdownContent content={exp.description} className="text-sm text-gray-700" />
@@ -120,6 +149,48 @@ const ExperienceItem = ({ exp, className }: { exp: CV['experience'][number]; cla
     </div>
   </div>
 )
+
+const OpenSourceProjectItem = ({
+  project,
+  className,
+}: {
+  project: CV['openSourceProjects'][number]
+  className?: string
+}) => {
+  const projectHref = normalizeProjectLink(project.link)
+  const label = getProjectLabel(project.link)
+
+  return (
+    <div className={className}>
+      <div className="flex items-start gap-3">
+        <EntryLogo src={project.logoUrl} alt={`${label} logo`} />
+        <div className="min-w-0 flex-1">
+          {projectHref ? (
+            <a
+              href={projectHref}
+              target="_blank"
+              rel="noreferrer"
+              className="mb-2 inline-flex items-center gap-2 break-all text-md font-bold text-blue-600 transition-colors hover:text-blue-700"
+            >
+              <span className="h-4 w-4 shrink-0" aria-hidden="true">
+                <GithubIcon />
+              </span>
+              <span>{label}</span>
+            </a>
+          ) : (
+            <div className="mb-2 inline-flex items-center gap-2 break-all text-md font-bold text-blue-600">
+              <span className="h-4 w-4 shrink-0" aria-hidden="true">
+                <GithubIcon />
+              </span>
+              <span>{label}</span>
+            </div>
+          )}
+          {project.description && <p className="text-sm text-gray-700">{project.description}</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const EducationItem = ({ edu, className }: { edu: CV['education'][number]; className?: string }) => (
   <div className={className}>
@@ -132,9 +203,7 @@ const EducationItem = ({ edu, className }: { edu: CV['education'][number]; class
             {formatDateRange(edu.startDate, edu.endDate)}
           </span>
         </div>
-        <div className="mb-2 text-md font-medium text-blue-600">
-          {edu.institution || 'Institution Name'}
-        </div>
+        <div className="mb-2 text-md font-medium text-blue-600">{edu.institution || 'Institution Name'}</div>
         {edu.description && (
           <div className="cv-long-text">
             <MarkdownContent content={edu.description} className="text-sm text-gray-700" />
@@ -145,11 +214,13 @@ const EducationItem = ({ edu, className }: { edu: CV['education'][number]; class
   </div>
 )
 
-export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode }) => {
-  const { personalInfo, experience = [], education = [], skills = [] } = cv
+function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode }) {
+  const { personalInfo, experience = [], openSourceProjects = [], education = [], languages = [], skills = [] } = cv
 
   const firstExperience = experience[0]
   const remainingExperience = experience.slice(1)
+  const firstOpenSourceProject = openSourceProjects[0]
+  const remainingOpenSourceProjects = openSourceProjects.slice(1)
   const firstEducation = education[0]
   const remainingEducation = education.slice(1)
 
@@ -169,9 +240,7 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
           <h1 className="mb-2 text-4xl font-bold uppercase tracking-wider text-gray-900">
             {personalInfo.fullName || 'Your Name'}
           </h1>
-          <p className="mb-4 text-xl font-medium text-blue-600">
-            {personalInfo.jobTitle || 'Job Title'}
-          </p>
+          <p className="mb-4 text-xl font-medium text-blue-600">{personalInfo.jobTitle || 'Job Title'}</p>
           <div className="cv-contact-list text-sm text-gray-600">
             {personalInfo.email && (
               <ContactItem href={`mailto:${personalInfo.email}`} icon={<MailIcon />}>
@@ -223,11 +292,7 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
                 {personalInfo.linkedin}
               </ContactItem>
             )}
-            {personalInfo.age && (
-              <ContactItem icon={<CalendarIcon />}>
-                {personalInfo.age} y.o.
-              </ContactItem>
-            )}
+            {personalInfo.age && <ContactItem icon={<CalendarIcon />}>{personalInfo.age} y.o.</ContactItem>}
             {personalInfo.location && (
               <ContactItem
                 href={`https://maps.google.com/?q=${encodeURIComponent(personalInfo.location)}`}
@@ -271,6 +336,27 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
         </section>
       )}
 
+      {openSourceProjects.length > 0 && firstOpenSourceProject && (
+        <section className="cv-flow-section">
+          <div className="cv-page-block">
+            <h2 className="mb-4 border-b border-gray-200 pb-1 text-lg font-bold uppercase tracking-widest text-gray-900">
+              Open Source Projects
+            </h2>
+            <OpenSourceProjectItem
+              project={firstOpenSourceProject}
+              className={remainingOpenSourceProjects.length > 0 ? 'mb-6' : ''}
+            />
+          </div>
+          {remainingOpenSourceProjects.length > 0 && (
+            <div className="cv-entry-list">
+              {remainingOpenSourceProjects.map((project) => (
+                <OpenSourceProjectItem key={project.id} project={project} className="cv-page-block" />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {education.length > 0 && firstEducation && (
         <section className="cv-flow-section">
           <div className="cv-page-block">
@@ -289,15 +375,38 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
         </section>
       )}
 
+      {languages.length > 0 && (
+        <section className="cv-flow-section cv-page-block min-w-0 w-full">
+          <h2 className="mb-4 border-b border-gray-200 pb-1 text-lg font-bold uppercase tracking-widest text-gray-900">
+            Languages
+          </h2>
+          <div className="flex min-w-0 w-full flex-wrap gap-2 text-sm leading-relaxed text-gray-800">
+            {languages.map((language) => (
+              <span
+                key={language.id}
+                className="inline-flex max-w-full items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 font-medium text-emerald-700"
+              >
+                <span className="break-words">{language.name}</span>
+                <span className="mx-2 text-emerald-400">-</span>
+                <span className="break-words">{language.level}</span>
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
       {skills.length > 0 && (
         <section className="cv-flow-section cv-page-block min-w-0 w-full">
           <h2 className="mb-4 border-b border-gray-200 pb-1 text-lg font-bold uppercase tracking-widest text-gray-900">
             Skills
           </h2>
-          <div className="flex min-w-0 w-full flex-wrap gap-x-3 gap-y-1 text-sm leading-relaxed text-gray-800">
+          <div className="flex min-w-0 w-full flex-wrap gap-2 text-sm leading-relaxed text-gray-800">
             {skills.map((skill) => (
-              <span key={skill.id} className="max-w-full break-words font-medium">
-                {skill.name}
+              <span
+                key={skill.id}
+                className="inline-flex max-w-full items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-medium text-blue-700"
+              >
+                <span className="break-words">{skill.name}</span>
               </span>
             ))}
           </div>
@@ -306,4 +415,7 @@ export const CVHtmlDocument = ({ cv, mode = 'preview' }: { cv: CV; mode?: Render
     </article>
   )
 }
+
+export { CVHtmlDocument }
+export default CVHtmlDocument
 
