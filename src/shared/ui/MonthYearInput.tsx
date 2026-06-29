@@ -7,6 +7,7 @@ interface MonthYearInputProps {
   onChange: (value: string) => void
   className?: string
   disabled?: boolean
+  monthOptional?: boolean
 }
 
 const MONTH_OPTIONS = [
@@ -25,6 +26,12 @@ const MONTH_OPTIONS = [
 ] as const
 
 function parseMonthYear(value?: string) {
+  const yearOnlyMatch = value?.match(/^(\d{4})$/)
+
+  if (yearOnlyMatch) {
+    return { year: yearOnlyMatch[1], month: '' }
+  }
+
   const match = value?.match(/^(\d{4})-(\d{2})$/)
 
   if (!match) {
@@ -37,7 +44,13 @@ function parseMonthYear(value?: string) {
   }
 }
 
-export const MonthYearInput = ({ value = '', onChange, className, disabled }: MonthYearInputProps) => {
+export const MonthYearInput = ({
+  value = '',
+  onChange,
+  className,
+  disabled,
+  monthOptional = false,
+}: MonthYearInputProps) => {
   const parsedValue = parseMonthYear(value)
   const [month, setMonth] = useState(parsedValue.month)
   const [year, setYear] = useState(parsedValue.year)
@@ -53,6 +66,11 @@ export const MonthYearInput = ({ value = '', onChange, className, disabled }: Mo
 
     if (!nextMonth && !normalizedYear) {
       onChange('')
+      return
+    }
+
+    if (monthOptional && normalizedYear.length === 4 && !nextMonth) {
+      onChange(normalizedYear)
       return
     }
 
@@ -84,7 +102,7 @@ export const MonthYearInput = ({ value = '', onChange, className, disabled }: Mo
         aria-label="Month"
         className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <option value="">Month</option>
+        <option value="">{monthOptional ? 'Month (optional)' : 'Month'}</option>
         {MONTH_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -103,4 +121,3 @@ export const MonthYearInput = ({ value = '', onChange, className, disabled }: Mo
     </div>
   )
 }
-

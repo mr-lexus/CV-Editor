@@ -141,6 +141,11 @@ function normalizeCV(value: unknown): CV {
       summary: readString(personalInfo.summary),
       photoUrl: readString(personalInfo.photoUrl),
       photoShape: personalInfo.photoShape === 'square' ? 'square' : 'round',
+      experienceYearsMode:
+        personalInfo.experienceYearsMode === 'hidden' || personalInfo.experienceYearsMode === 'manual'
+          ? personalInfo.experienceYearsMode
+          : 'auto',
+      manualExperienceYears: readString(personalInfo.manualExperienceYears),
     },
     experience: Array.isArray(value.experience)
       ? value.experience

@@ -128,6 +128,7 @@ export const EditEducation = () => {
               <MonthYearInput
                 value={edu.startDate}
                 onChange={(value) => updateEducation(edu.id, { startDate: value })}
+                monthOptional
               />
             </div>
 
@@ -136,6 +137,7 @@ export const EditEducation = () => {
               <MonthYearInput
                 value={edu.endDate}
                 onChange={(value) => updateEducation(edu.id, { endDate: value })}
+                monthOptional
               />
             </div>
 
@@ -157,3 +159,6 @@ export const EditEducation = () => {
     </div>
   )
 }
+
+
+

@@ -14,6 +14,8 @@ export const personalInfoSchema = z.object({
   summary: z.string().optional(),
   photoUrl: z.string().optional(),
   photoShape: z.enum(['square', 'round']).optional(),
+  experienceYearsMode: z.enum(['hidden', 'auto', 'manual']).optional(),
+  manualExperienceYears: z.string().optional(),
 })
 
 export const experienceSchema = z.object({

@@ -61,6 +61,7 @@ export const EditPersonalInfo = () => {
   const currentPhotoUrl = watch('photoUrl')
   const currentPhotoShape = watch('photoShape')
   const summaryValue = watch('summary')
+  const experienceYearsMode = watch('experienceYearsMode') || 'auto'
 
   return (
     <div className="space-y-4 p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -167,6 +168,33 @@ export const EditPersonalInfo = () => {
           <Label htmlFor="age">Age</Label>
           <Input id="age" type="number" placeholder="25" {...register('age')} />
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="experienceYearsMode">Experience Years</Label>
+          <select
+            id="experienceYearsMode"
+            {...register('experienceYearsMode')}
+            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="hidden">Do not show</option>
+            <option value="auto">Calculate from experience</option>
+            <option value="manual">Enter manually</option>
+          </select>
+        </div>
+
+        {experienceYearsMode === 'manual' && (
+          <div className="space-y-2">
+            <Label htmlFor="manualExperienceYears">Manual Experience Years</Label>
+            <Input
+              id="manualExperienceYears"
+              type="number"
+              step="0.5"
+              min="0"
+              placeholder="5"
+              {...register('manualExperienceYears')}
+            />
+          </div>
+        )}
 
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor="location">Location</Label>

@@ -1,3 +1,5 @@
+export type ExperienceYearsMode = 'hidden' | 'auto' | 'manual'
+
 export interface PersonalInfo {
   fullName: string
   jobTitle: string
@@ -12,6 +14,8 @@ export interface PersonalInfo {
   summary: string
   photoUrl?: string
   photoShape?: 'square' | 'round'
+  experienceYearsMode?: ExperienceYearsMode
+  manualExperienceYears?: string
 }
 
 export interface Experience {

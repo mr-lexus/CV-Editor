@@ -36,6 +36,8 @@ const initialState: CV = {
     summary: '',
     photoUrl: '',
     photoShape: 'round',
+    experienceYearsMode: 'auto',
+    manualExperienceYears: '',
   },
   experience: [],
   openSourceProjects: [],
