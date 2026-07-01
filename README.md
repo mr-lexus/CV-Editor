@@ -80,7 +80,7 @@ npm run start:backend
 
 - `VITE_BASE_PATH` - base path for static deployment, for example `/CV-Editor/`
 - `VITE_PDF_BACKEND_URL` - local dev proxy target for Vite, for example `http://localhost:3001`
-- `VITE_PDF_API_URL` - absolute production PDF endpoint, for example `https://your-backend.vercel.app/api/pdf/generate`
+- `VITE_PDF_API_URL` - absolute production PDF endpoint, for example `https://cv-pdf.example.com/api/pdf/generate`
 
 ### Backend
 
@@ -91,6 +91,8 @@ npm run start:backend
 
 `FRONTEND_ORIGIN` and `ALLOWED_TARGET_ORIGINS` support comma-separated values.
 
+`PUPPETEER_EXECUTABLE_PATH` is optional. In local Linux/WSL mode, if it is not set, the backend uses the browser bundled with `puppeteer`.
+
 ## Deployment
 
 ### GitHub Pages
@@ -100,14 +102,14 @@ The repository already includes a workflow at `.github/workflows/deploy-pages.ym
 Required repository variable:
 
 ```text
-VITE_PDF_API_URL=https://your-backend.vercel.app/api/pdf/generate
+VITE_PDF_API_URL=https://cv-pdf.example.com/api/pdf/generate
 ```
 
-### Vercel Backend
+### Linux Backend
 
-Deploy the `backend` directory as a separate Vercel project.
+Deploy the `backend` directory as a separate Linux service, container, or VM.
 
-Required environment variables in Vercel:
+Required backend environment variables:
 
 ```text
 FRONTEND_ORIGIN=https://mr-lexus.github.io
@@ -116,13 +118,29 @@ ALLOWED_TARGET_ORIGINS=https://mr-lexus.github.io
 
 If you later use a custom domain, update both values to that domain.
 
+### Vercel Backend
+
+The backend also supports Vercel serverless deployment.
+
+Runtime behavior:
+
+- Local Linux/WSL: uses `puppeteer`
+- Vercel: uses `@sparticuz/chromium` + `puppeteer-core`
+
+Required backend environment variables:
+
+```text
+FRONTEND_ORIGIN=https://mr-lexus.github.io
+ALLOWED_TARGET_ORIGINS=https://mr-lexus.github.io
+```
+
 ## Project Structure
 
 ```text
 .
 |- src/                    # React application
 |- backend/src/            # Local Express + PDF service
-|- backend/api/            # Vercel serverless API handlers
+|- backend/api/            # API-compatible handlers reusing the same PDF logic
 |- public/                 # Static assets
 |- .github/workflows/      # GitHub Pages deployment workflow
 ```

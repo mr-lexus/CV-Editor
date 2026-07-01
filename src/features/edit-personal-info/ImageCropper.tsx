@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useI18n } from '@/shared/i18n'
 
 interface ImageCropperProps {
   imageUrl: string
@@ -13,6 +14,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
   onCrop,
   onCancel,
 }) => {
+  const { t } = useI18n()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -98,7 +100,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full">
-        <h3 className="text-xl font-bold mb-4 text-gray-800 text-center">Crop Photo</h3>
+        <h3 className="mb-4 text-center text-xl font-bold text-gray-800">{t('personalInfo.cropPhoto')}</h3>
         <div className="flex justify-center mb-6 overflow-hidden touch-none relative">
           <canvas
             ref={canvasRef}
@@ -120,7 +122,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
         </div>
         <div className="mb-6 px-2">
           <label className="flex justify-between text-sm font-medium text-gray-700 mb-2">
-            <span>Zoom</span>
+            <span>{t('personalInfo.zoom')}</span>
             <span>{Math.round(scale * 100)}%</span>
           </label>
           <input
@@ -135,10 +137,10 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
         </div>
         <div className="flex justify-end gap-3">
           <button onClick={onCancel} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50">
-            Cancel
+            {t('common.cancel')}
           </button>
           <button onClick={handleSave} className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">
-            Save
+            {t('common.save')}
           </button>
         </div>
       </div>

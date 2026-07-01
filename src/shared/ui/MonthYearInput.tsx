@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Input } from '@/shared/ui/Input'
 import { cn } from '@/shared/lib/cn'
+import { useI18n } from '@/shared/i18n'
 
 interface MonthYearInputProps {
   value?: string
@@ -10,20 +11,7 @@ interface MonthYearInputProps {
   monthOptional?: boolean
 }
 
-const MONTH_OPTIONS = [
-  { value: '01', label: 'January' },
-  { value: '02', label: 'February' },
-  { value: '03', label: 'March' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'June' },
-  { value: '07', label: 'July' },
-  { value: '08', label: 'August' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
-] as const
+const MONTH_OPTIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'] as const
 
 function parseMonthYear(value?: string) {
   const yearOnlyMatch = value?.match(/^(\d{4})$/)
@@ -51,6 +39,7 @@ export const MonthYearInput = ({
   disabled,
   monthOptional = false,
 }: MonthYearInputProps) => {
+  const { t } = useI18n()
   const parsedValue = parseMonthYear(value)
   const [month, setMonth] = useState(parsedValue.month)
   const [year, setYear] = useState(parsedValue.year)
@@ -99,24 +88,24 @@ export const MonthYearInput = ({
         value={month}
         onChange={(e) => handleMonthChange(e.target.value)}
         disabled={disabled}
-        aria-label="Month"
+        aria-label={t('dateInput.month')}
         className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <option value="">{monthOptional ? 'Month (optional)' : 'Month'}</option>
+        <option value="">{monthOptional ? t('dateInput.monthOptional') : t('dateInput.month')}</option>
         {MONTH_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
+          <option key={option} value={option}>
+            {t(`dateInput.months.${option}`)}
           </option>
         ))}
       </select>
       <Input
         value={year}
         onChange={(e) => handleYearChange(e.target.value)}
-        placeholder="Year"
+        placeholder={t('dateInput.year')}
         inputMode="numeric"
         maxLength={4}
         disabled={disabled}
-        aria-label="Year"
+        aria-label={t('dateInput.year')}
       />
     </div>
   )

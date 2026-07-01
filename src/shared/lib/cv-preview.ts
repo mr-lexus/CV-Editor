@@ -1,5 +1,5 @@
 import type { CV } from '@/entities/cv/model/types'
-import { emptyCV } from '@/entities/cv/model/defaults'
+import { createDefaultSkillGroup, emptyCV } from '@/entities/cv/model/defaults'
 import type { RenderMode } from '@/shared/ui/CVHtmlDocument'
 
 const PREVIEW_DATA_PARAM = 'data'
@@ -107,7 +107,7 @@ function normalizeLanguage(value: unknown, index: number): CV['languages'][numbe
   }
 }
 
-function normalizeSkill(value: unknown, index: number): CV['skills'][number] | null {
+function normalizeSkill(value: unknown, index: number): CV['skillGroups'][number]['skills'][number] | null {
   if (!isRecord(value)) {
     return null
   }
@@ -115,6 +115,23 @@ function normalizeSkill(value: unknown, index: number): CV['skills'][number] | n
   return {
     id: readString(value.id) || `skill-${index}`,
     name: readString(value.name),
+  }
+}
+
+function normalizeSkillGroup(value: unknown, index: number): CV['skillGroups'][number] | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  return {
+    id: readString(value.id) || `skill-group-${index}`,
+    name: readString(value.name),
+    isDefault: value.isDefault === true,
+    skills: Array.isArray(value.skills)
+      ? value.skills
+          .map((entry, skillIndex) => normalizeSkill(entry, skillIndex))
+          .filter((entry): entry is CV['skillGroups'][number]['skills'][number] => entry !== null)
+      : [],
   }
 }
 
@@ -167,11 +184,17 @@ function normalizeCV(value: unknown): CV {
           .map((entry, index) => normalizeLanguage(entry, index))
           .filter((entry): entry is CV['languages'][number] => entry !== null)
       : [],
-    skills: Array.isArray(value.skills)
-      ? value.skills
-          .map((entry, index) => normalizeSkill(entry, index))
-          .filter((entry): entry is CV['skills'][number] => entry !== null)
-      : [],
+    skillGroups: Array.isArray(value.skillGroups)
+      ? value.skillGroups
+          .map((entry, index) => normalizeSkillGroup(entry, index))
+          .filter((entry): entry is CV['skillGroups'][number] => entry !== null)
+      : [createDefaultSkillGroup(
+          Array.isArray(value.skills)
+            ? value.skills
+                .map((entry, index) => normalizeSkill(entry, index))
+                .filter((entry): entry is CV['skillGroups'][number]['skills'][number] => entry !== null)
+            : [],
+        )],
   }
 }
 

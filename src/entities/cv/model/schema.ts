@@ -1,9 +1,13 @@
 import { z } from 'zod'
 
-export const personalInfoSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  jobTitle: z.string().min(2, 'Job title must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
+export const createPersonalInfoSchema = (messages: {
+  nameMin: string
+  jobTitleMin: string
+  invalidEmail: string
+}) => z.object({
+  fullName: z.string().min(2, messages.nameMin),
+  jobTitle: z.string().min(2, messages.jobTitleMin),
+  email: z.string().email(messages.invalidEmail),
   phone: z.string().optional(),
   whatsapp: z.string().optional(),
   telegram: z.string().optional(),

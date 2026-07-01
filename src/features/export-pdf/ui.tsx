@@ -1,7 +1,10 @@
 import { FileDown } from 'lucide-react'
 import { useState } from 'react'
-import { useCVStore } from '@/entities/cv/model/store'
+import { selectActiveVersion } from '@/entities/cv/model/selectors'
 import { buildCVPreviewUrl, PDF_API_ENDPOINT } from '@/shared/lib/cv-render-data'
+import { useCVStore } from '@/entities/cv/model/store'
+import type { CVVersion } from '@/entities/cv/model/types'
+import { useI18n } from '@/shared/i18n'
 import { Button } from '@/shared/ui/Button'
 
 function toFileName(fullName: string): string {
@@ -37,45 +40,60 @@ async function readErrorMessage(response: Response): Promise<string> {
   return text || 'PDF generation failed.'
 }
 
+async function requestPdf(version: CVVersion, origin: string): Promise<{ blob: Blob; fileName: string }> {
+  const fallbackFileName = toFileName(`${version.cv.personalInfo.fullName}-${version.locale}`)
+  const previewUrl = buildCVPreviewUrl(origin)
+  const response = await fetch(PDF_API_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      data: {
+        cv: version.cv,
+        locale: version.locale,
+      },
+      fileName: fallbackFileName,
+      url: previewUrl,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response))
+  }
+
+  return {
+    blob: await response.blob(),
+    fileName: readFileName(response.headers, fallbackFileName),
+  }
+}
+
 export const ExportPDF = () => {
-  const cv = useCVStore((state) => state.cv)
+  const { t } = useI18n()
+  const activeVersion = useCVStore(selectActiveVersion)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleExport = async () => {
+    if (!activeVersion) {
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const previewUrl = buildCVPreviewUrl(window.location.origin)
-      const fallbackFileName = toFileName(cv.personalInfo.fullName)
-      const response = await fetch(PDF_API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          data: cv,
-          fileName: fallbackFileName,
-          url: previewUrl,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(await readErrorMessage(response))
-      }
-
-      const blob = await response.blob()
-      const objectUrl = URL.createObjectURL(blob)
+      const singleResult = await requestPdf(activeVersion, window.location.origin)
+      const objectUrl = URL.createObjectURL(singleResult.blob)
       const downloadLink = document.createElement('a')
 
       downloadLink.href = objectUrl
-      downloadLink.download = readFileName(response.headers, fallbackFileName)
+      downloadLink.download = singleResult.fileName
       downloadLink.click()
 
       URL.revokeObjectURL(objectUrl)
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : 'PDF generation failed.')
+      setError(caughtError instanceof Error ? caughtError.message : t('export.error'))
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +103,7 @@ export const ExportPDF = () => {
     <div>
       <Button onClick={handleExport} disabled={isLoading} className="w-full sm:w-auto">
         <FileDown className="mr-2 h-4 w-4" />
-        {isLoading ? 'Generating PDF...' : 'Export PDF'}
+        {isLoading ? t('export.singleLoading') : t('export.single')}
       </Button>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>

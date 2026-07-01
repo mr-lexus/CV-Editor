@@ -1,4 +1,5 @@
 import type { CV } from '@/entities/cv/model/types'
+import { selectActiveCV } from '@/entities/cv/model/selectors'
 import { useCVStore } from '@/entities/cv/model/store'
 import { cn } from '@/shared/lib/cn'
 import { CVHtmlDocument, type RenderMode } from '@/shared/ui/CVHtmlDocument'
@@ -10,7 +11,7 @@ interface CVPreviewProps {
 }
 
 export const CVPreview = ({ cv, mode = 'preview', className }: CVPreviewProps) => {
-  const storedCV = useCVStore((state) => state.cv)
+  const storedCV = useCVStore(selectActiveCV)
   const currentCV = cv ?? storedCV
 
   return (

@@ -1,5 +1,7 @@
 import type { ChangeEvent } from 'react'
+import { selectActiveCV } from '@/entities/cv/model/selectors'
 import { useCVStore } from '@/entities/cv/model/store'
+import { useI18n } from '@/shared/i18n'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { Label } from '@/shared/ui/Label'
@@ -8,7 +10,8 @@ import { Plus, Trash2, Upload, X } from 'lucide-react'
 import { RichTextEditor } from '@/shared/ui/RichTextEditor'
 
 export const EditExperience = () => {
-  const experience = useCVStore((state) => state.cv.experience)
+  const { t } = useI18n()
+  const experience = useCVStore((state) => selectActiveCV(state).experience)
   const addExperience = useCVStore((state) => state.addExperience)
   const updateExperience = useCVStore((state) => state.updateExperience)
   const removeExperience = useCVStore((state) => state.removeExperience)
@@ -44,9 +47,9 @@ export const EditExperience = () => {
   return (
     <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">Experience</h2>
+        <h2 className="text-xl font-semibold text-gray-800">{t('experience.title')}</h2>
         <Button onClick={handleAdd} variant="outline" size="sm" className="h-8">
-          <Plus className="mr-2 h-4 w-4" /> Add
+          <Plus className="mr-2 h-4 w-4" /> {t('common.add')}
         </Button>
       </div>
 
@@ -62,7 +65,7 @@ export const EditExperience = () => {
             </Button>
 
             <div className="space-y-2 md:col-span-2">
-              <Label>Company Logo</Label>
+              <Label>{t('experience.companyLogo')}</Label>
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-dashed border-gray-300 bg-gray-50 p-2">
                   {exp.logoUrl ? (
@@ -72,7 +75,7 @@ export const EditExperience = () => {
                       className="max-h-full max-w-full object-contain"
                     />
                   ) : (
-                    <span className="px-2 text-center text-xs text-gray-400">No Logo</span>
+                    <span className="px-2 text-center text-xs text-gray-400">{t('personalInfo.noPhoto')}</span>
                   )}
                 </div>
 
@@ -82,7 +85,7 @@ export const EditExperience = () => {
                     className="inline-flex w-fit cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-gray-50"
                   >
                     <Upload className="h-4 w-4" />
-                    Upload Logo
+                    {t('experience.uploadLogo')}
                   </Label>
                   <input
                     id={`experience-logo-${exp.id}`}
@@ -98,7 +101,7 @@ export const EditExperience = () => {
                       className="inline-flex items-center gap-1 text-left text-sm text-red-500 transition-colors hover:text-red-700"
                     >
                       <X className="h-3 w-3" />
-                      Remove Logo
+                      {t('experience.removeLogo')}
                     </button>
                   )}
                 </div>
@@ -106,25 +109,25 @@ export const EditExperience = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Company</Label>
+              <Label>{t('experience.company')}</Label>
               <Input
                 value={exp.company}
                 onChange={(e) => updateExperience(exp.id, { company: e.target.value })}
-                placeholder="Tech Inc."
+                placeholder={t('experience.placeholders.company')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Position</Label>
+              <Label>{t('experience.position')}</Label>
               <Input
                 value={exp.position}
                 onChange={(e) => updateExperience(exp.id, { position: e.target.value })}
-                placeholder="Senior Developer"
+                placeholder={t('experience.placeholders.position')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Start Date</Label>
+              <Label>{t('experience.startDate')}</Label>
               <MonthYearInput
                 value={exp.startDate}
                 onChange={(value) => updateExperience(exp.id, { startDate: value })}
@@ -132,7 +135,7 @@ export const EditExperience = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>End Date</Label>
+              <Label>{t('experience.endDate')}</Label>
               <MonthYearInput
                 value={exp.endDate}
                 onChange={(value) => updateExperience(exp.id, { endDate: value })}
@@ -140,18 +143,18 @@ export const EditExperience = () => {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label>Description</Label>
+              <Label>{t('experience.description')}</Label>
               <RichTextEditor
                 value={exp.description}
                 onChange={(val) => updateExperience(exp.id, { description: val })}
-                placeholder="Describe your responsibilities and achievements..."
+                placeholder={t('experience.placeholders.description')}
                 minHeight={100}
               />
             </div>
           </div>
         ))}
         {experience.length === 0 && (
-          <p className="py-4 text-center text-sm text-gray-500">No experience added yet.</p>
+          <p className="py-4 text-center text-sm text-gray-500">{t('experience.empty')}</p>
         )}
       </div>
     </div>

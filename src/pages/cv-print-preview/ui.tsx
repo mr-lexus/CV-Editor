@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
-import { getRenderModeFromSearch, readCVDataFromSearch } from '@/shared/lib/cv-render-data'
+import type { CVRenderPayload } from '@/shared/lib/cv-render-data'
+import { getRenderModeFromSearch } from '@/shared/lib/cv-render-data'
 import { CVPreview } from '@/widgets/cv-preview/ui'
 
-export const CVPrintPreviewPage = () => {
+export const CVPrintPreviewPage = ({ renderPayload }: { renderPayload: CVRenderPayload | null }) => {
   const search = window.location.search
-  const cv = readCVDataFromSearch(search)
   const mode = getRenderModeFromSearch(search)
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export const CVPrintPreviewPage = () => {
 
   return (
     <main className="min-h-screen bg-white">
-      <CVPreview cv={cv} mode={mode} />
+      <CVPreview cv={renderPayload?.cv} mode={mode} />
     </main>
   )
 }

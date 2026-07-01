@@ -1,5 +1,6 @@
 import type { CV } from '@/entities/cv/model/types'
-import { emptyCV } from '@/entities/cv/model/defaults'
+import { createDefaultSkillGroup, emptyCV } from '@/entities/cv/model/defaults'
+import type { LocaleCode } from '@/shared/i18n'
 import type { RenderMode } from '@/shared/ui/CVHtmlDocument'
 
 const PREVIEW_DATA_PARAM = 'data'
@@ -17,6 +18,11 @@ declare global {
   interface Window {
     __CV_PRINT_DATA__?: unknown
   }
+}
+
+export interface CVRenderPayload {
+  cv: CV
+  locale: LocaleCode
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -107,7 +113,7 @@ function normalizeLanguage(value: unknown, index: number): CV['languages'][numbe
   }
 }
 
-function normalizeSkill(value: unknown, index: number): CV['skills'][number] | null {
+function normalizeSkill(value: unknown, index: number): CV['skillGroups'][number]['skills'][number] | null {
   if (!isRecord(value)) {
     return null
   }
@@ -167,15 +173,52 @@ function normalizeCV(value: unknown): CV {
           .map((entry, index) => normalizeLanguage(entry, index))
           .filter((entry): entry is CV['languages'][number] => entry !== null)
       : [],
+    skillGroups: Array.isArray(value.skillGroups)
+      ? value.skillGroups
+          .map((entry, index) => normalizeSkillGroup(entry, index))
+          .filter((entry): entry is CV['skillGroups'][number] => entry !== null)
+      : [createDefaultSkillGroup(
+          Array.isArray(value.skills)
+            ? value.skills
+                .map((entry, index) => normalizeSkill(entry, index))
+                .filter((entry): entry is CV['skillGroups'][number]['skills'][number] => entry !== null)
+            : [],
+        )],
+  }
+}
+
+function normalizeRenderPayload(value: unknown): CVRenderPayload {
+  if (!isRecord(value)) {
+    return {
+      cv: emptyCV,
+      locale: 'en',
+    }
+  }
+
+  return {
+    cv: normalizeCV(value.cv ?? value),
+    locale: value.locale === 'ru' ? 'ru' : 'en',
+  }
+}
+
+function normalizeSkillGroup(value: unknown, index: number): CV['skillGroups'][number] | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  return {
+    id: readString(value.id) || `skill-group-${index}`,
+    name: readString(value.name),
+    isDefault: value.isDefault === true,
     skills: Array.isArray(value.skills)
       ? value.skills
-          .map((entry, index) => normalizeSkill(entry, index))
-          .filter((entry): entry is CV['skills'][number] => entry !== null)
+          .map((entry, skillIndex) => normalizeSkill(entry, skillIndex))
+          .filter((entry): entry is CV['skillGroups'][number]['skills'][number] => entry !== null)
       : [],
   }
 }
 
-function readQueryCVData(search: string): CV | null {
+function readQueryCVData(search: string): CVRenderPayload | null {
   const params = new URLSearchParams(search)
   const encodedData = params.get(PREVIEW_DATA_PARAM)
 
@@ -184,26 +227,26 @@ function readQueryCVData(search: string): CV | null {
   }
 
   try {
-    return normalizeCV(JSON.parse(decodeBase64Url(encodedData)))
+    return normalizeRenderPayload(JSON.parse(decodeBase64Url(encodedData)))
   } catch {
     return null
   }
 }
 
-function readInjectedCVData(): CV | null {
-  return window.__CV_PRINT_DATA__ ? normalizeCV(window.__CV_PRINT_DATA__) : null
+function readInjectedCVData(): CVRenderPayload | null {
+  return window.__CV_PRINT_DATA__ ? normalizeRenderPayload(window.__CV_PRINT_DATA__) : null
 }
 
-export function encodeCVData(cv: CV): string {
-  return encodeBase64Url(JSON.stringify(cv))
+export function encodeCVData(payload: CVRenderPayload): string {
+  return encodeBase64Url(JSON.stringify(payload))
 }
 
-export function buildCVPreviewUrl(origin: string, cv?: CV): string {
+export function buildCVPreviewUrl(origin: string, payload?: CVRenderPayload): string {
   const previewUrl = new URL(baseUrl, origin)
   previewUrl.searchParams.set('mode', PRINT_MODE)
 
-  if (cv) {
-    previewUrl.searchParams.set(PREVIEW_DATA_PARAM, encodeCVData(cv))
+  if (payload) {
+    previewUrl.searchParams.set(PREVIEW_DATA_PARAM, encodeCVData(payload))
   }
 
   return previewUrl.toString()
@@ -214,8 +257,8 @@ export function isPrintPreviewPath(pathname: string): boolean {
   return normalizedPath.endsWith(PRINT_PREVIEW_PATH)
 }
 
-export function readCVDataFromSearch(search: string): CV {
-  return readQueryCVData(search) || readInjectedCVData() || emptyCV
+export function readCVDataFromSearch(search: string): CVRenderPayload {
+  return readQueryCVData(search) || readInjectedCVData() || { cv: emptyCV, locale: 'en' }
 }
 
 export function getRenderModeFromSearch(search: string): RenderMode {

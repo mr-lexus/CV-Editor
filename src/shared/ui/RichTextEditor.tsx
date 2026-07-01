@@ -1,9 +1,10 @@
-﻿import { useState, useRef, useCallback, useEffect, KeyboardEvent } from 'react'
+import { useState, useRef, useCallback, useEffect, KeyboardEvent } from 'react'
 import {
   Bold, Italic, Underline, Strikethrough, List, ListOrdered,
   Heading2, Heading3, Link2, HelpCircle, Eye, Code,
   Quote, Minus, ListChecks,
 } from 'lucide-react'
+import { useI18n } from '@/shared/i18n'
 import { parseMarkdown } from './MarkdownContent'
 
 // ---------- Types ----------
@@ -365,6 +366,8 @@ const ToolbarBtn = ({ title, onClick, children, active }: ToolbarBtnProps) => (
 
 // ---------- Help Popover ----------
 const HelpPopover = ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+  const { t } = useI18n()
+
   useEffect(() => {
     if (!open) return
     const handler = () => onClose()
@@ -380,7 +383,7 @@ const HelpPopover = ({ open, onClose }: { open: boolean; onClose: () => void }) 
       onClick={(e) => e.stopPropagation()}
     >
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-        Keyboard Shortcuts
+        {t('richText.keyboardShortcuts')}
       </p>
       <div className="space-y-1.5">
         {HOTKEYS.map(({ keys, label }) => (
@@ -393,7 +396,7 @@ const HelpPopover = ({ open, onClose }: { open: boolean; onClose: () => void }) 
         ))}
       </div>
       <p className="text-[10px] text-gray-400 mt-3 border-t border-gray-100 pt-2">
-        Press again to remove formatting
+        {t('richText.removeFormattingHint')}
       </p>
     </div>
   )
@@ -403,16 +406,18 @@ const HelpPopover = ({ open, onClose }: { open: boolean; onClose: () => void }) 
 export const RichTextEditor = ({
   value,
   onChange,
-  placeholder = 'Enter text...',
+  placeholder,
   minHeight = 120,
   id,
 }: RichTextEditorProps) => {
+  const { t } = useI18n()
   const [mode, setMode] = useState<EditorMode>('markdown')
   const [showHelp, setShowHelp] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const wysiwygRef = useRef<HTMLDivElement>(null)
   const isInternalChange = useRef(false)
+  const resolvedPlaceholder = placeholder || t('richText.placeholder')
 
   // --- Auto-resize textarea ---
   useEffect(() => {
@@ -574,13 +579,13 @@ export const RichTextEditor = ({
           break
         case e.key === 'k': {
           e.preventDefault()
-          const url = window.prompt('Link URL:', 'https://')
+          const url = window.prompt(t('richText.linkPrompt'), 'https://')
           if (url) exec('createLink', url)
           break
         }
       }
     },
-    [toggleMode]
+    [t, toggleMode]
   )
 
   // --- Toolbar actions ---
@@ -616,7 +621,7 @@ export const RichTextEditor = ({
     blockquote: () => document.execCommand('formatBlock', false, 'blockquote'),
     hr: () => document.execCommand('insertHorizontalRule'),
     link: () => {
-      const url = window.prompt('Link URL:', 'https://')
+      const url = window.prompt(t('richText.linkPrompt'), 'https://')
       if (url) document.execCommand('createLink', false, url)
     },
   }
@@ -631,45 +636,45 @@ export const RichTextEditor = ({
       <div className="flex items-start justify-between bg-gray-50 border border-gray-200 rounded-t-md px-2 py-1.5 gap-2">
         {/* Scrollable Toolbar area */}
         <div className="flex flex-wrap items-center gap-0.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          <ToolbarBtn title="Bold (Ctrl+B)" onClick={actions.bold}>
+          <ToolbarBtn title={`${t('richText.actions.bold')} (Ctrl+B)`} onClick={actions.bold}>
             <Bold className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Italic (Ctrl+I)" onClick={actions.italic}>
+          <ToolbarBtn title={`${t('richText.actions.italic')} (Ctrl+I)`} onClick={actions.italic}>
             <Italic className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Underline (Ctrl+U)" onClick={actions.underline}>
+          <ToolbarBtn title={`${t('richText.actions.underline')} (Ctrl+U)`} onClick={actions.underline}>
             <Underline className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Strikethrough (Ctrl+Shift+S)" onClick={actions.strike}>
+          <ToolbarBtn title={`${t('richText.actions.strikethrough')} (Ctrl+Shift+S)`} onClick={actions.strike}>
             <Strikethrough className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Inline code (Ctrl+`)" onClick={actions.code}>
+          <ToolbarBtn title={`${t('richText.actions.inlineCode')} (Ctrl+\`)`} onClick={actions.code}>
             <Code className={iconSize} />
           </ToolbarBtn>
           <span className="w-px h-4 bg-gray-200 mx-1" />
-          <ToolbarBtn title="Heading H2 (Ctrl+Shift+H)" onClick={actions.h2}>
+          <ToolbarBtn title={`${t('richText.actions.heading2')} (Ctrl+Shift+H)`} onClick={actions.h2}>
             <Heading2 className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Bullet List (Ctrl+Shift+L)" onClick={actions.ul}>
+          <ToolbarBtn title={`${t('richText.actions.bulletList')} (Ctrl+Shift+L)`} onClick={actions.ul}>
             <List className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Numbered List (Ctrl+Shift+O)" onClick={actions.ol}>
+          <ToolbarBtn title={`${t('richText.actions.numberedList')} (Ctrl+Shift+O)`} onClick={actions.ol}>
             <ListOrdered className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Link (Ctrl+K)" onClick={actions.link}>
+          <ToolbarBtn title={`${t('richText.actions.link')} (Ctrl+K)`} onClick={actions.link}>
             <Link2 className={iconSize} />
           </ToolbarBtn>
           <span className="w-px h-4 bg-gray-200 mx-1" />
-          <ToolbarBtn title="Task List (Ctrl+Shift+T)" onClick={actions.taskList}>
+          <ToolbarBtn title={`${t('richText.actions.taskList')} (Ctrl+Shift+T)`} onClick={actions.taskList}>
             <ListChecks className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Blockquote (Ctrl+Shift+Q)" onClick={actions.blockquote}>
+          <ToolbarBtn title={`${t('richText.actions.blockquote')} (Ctrl+Shift+Q)`} onClick={actions.blockquote}>
             <Quote className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Heading H3 (Ctrl+Shift+3)" onClick={actions.h3}>
+          <ToolbarBtn title={`${t('richText.actions.heading3')} (Ctrl+Shift+3)`} onClick={actions.h3}>
             <Heading3 className={iconSize} />
           </ToolbarBtn>
-          <ToolbarBtn title="Horizontal Rule" onClick={actions.hr}>
+          <ToolbarBtn title={t('richText.actions.horizontalRule')} onClick={actions.hr}>
             <Minus className={iconSize} />
           </ToolbarBtn>
 
@@ -678,7 +683,7 @@ export const RichTextEditor = ({
           {/* Preview toggle (markdown only) */}
           {mode === 'markdown' && (
             <ToolbarBtn
-              title="Preview"
+              title={t('richText.preview')}
               onClick={() => setShowPreview((v) => !v)}
               active={showPreview}
             >
@@ -689,7 +694,9 @@ export const RichTextEditor = ({
           {/* Mode toggle */}
           <button
             type="button"
-            title={`Toggle mode (Ctrl+M) - current: ${mode === 'markdown' ? 'Markdown' : 'Visual'}`}
+            title={t('richText.toggleModeTitle', {
+              mode: mode === 'markdown' ? t('richText.markdown') : t('richText.visual'),
+            })}
             onMouseDown={(e) => {
               e.preventDefault()
               toggleMode()
@@ -701,11 +708,11 @@ export const RichTextEditor = ({
           >
             {mode === 'markdown' ? (
               <>
-                <Code className="w-3 h-3" /> MD
+                <Code className="w-3 h-3" /> {t('richText.modeShortMarkdown')}
               </>
             ) : (
               <>
-                <Eye className="w-3 h-3" /> Visual
+                <Eye className="w-3 h-3" /> {t('richText.modeShortVisual')}
               </>
             )}
           </button>
@@ -715,7 +722,7 @@ export const RichTextEditor = ({
         <div className="flex items-center shrink-0">
           <div className="relative">
             <ToolbarBtn
-              title="Keyboard Shortcuts"
+              title={t('richText.keyboardShortcuts')}
               onClick={() => {
                 setShowHelp((v) => !v)
               }}
@@ -736,7 +743,7 @@ export const RichTextEditor = ({
             className="w-full border border-t-0 border-gray-200 rounded-b-md bg-white px-3 py-2 text-sm text-gray-700 markdown-content"
             style={{ minHeight }}
             dangerouslySetInnerHTML={{
-              __html: parseMarkdown(value) || `<span class="text-gray-400">${placeholder}</span>`,
+              __html: parseMarkdown(value) || `<span class="text-gray-400">${resolvedPlaceholder}</span>`,
             }}
           />
         ) : (
@@ -747,7 +754,7 @@ export const RichTextEditor = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleMarkdownKeyDown}
-            placeholder={placeholder}
+            placeholder={resolvedPlaceholder}
             className="flex w-full border border-t-0 border-gray-200 rounded-b-md bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 resize-none font-mono transition-all"
             style={{ minHeight }}
           />
@@ -760,7 +767,7 @@ export const RichTextEditor = ({
           suppressContentEditableWarning
           onInput={handleWysiwygInput}
           onKeyDown={handleWysiwygKeyDown}
-          data-placeholder={placeholder}
+          data-placeholder={resolvedPlaceholder}
           className="w-full border border-t-0 border-gray-200 rounded-b-md bg-white px-3 py-2 text-sm text-gray-700 focus-visible:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-0 wysiwyg-editor markdown-content"
           style={{ minHeight }}
         />

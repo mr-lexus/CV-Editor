@@ -23,7 +23,7 @@
 
 .markdown-content {
   color: inherit;
-  line-height: 1.42;
+  line-height: 1.4;
 }
 
 .markdown-content p {
@@ -246,12 +246,13 @@
   width: min(210mm, 100%);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1rem;
+  --cv-page-padding: 8mm;
 }
 
 .cv-document[data-render-mode='preview'] {
   min-height: 297mm;
-  padding: 10mm;
+  padding: var(--cv-page-padding);
 }
 
 .cv-document[data-render-mode='print'] {
@@ -311,13 +312,11 @@
 }
 
 .cv-flow-section + .cv-flow-section {
-  margin-top: 1.2rem;
+  margin-top: 0.8rem;
 }
 
 .cv-entry-list > * + * {
   margin-top: 1.125rem;
 }
-
-
 
 

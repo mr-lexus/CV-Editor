@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { CV } from '@/entities/cv/model/types'
 import { cn } from '@/shared/lib/cn'
+import { formatPreviewExperience, getIntlLocale, useI18n } from '@/shared/i18n'
 import {
   CalendarIcon,
   GithubIcon,
@@ -54,22 +55,7 @@ const EntryLogo = ({ src, alt }: { src?: string; alt: string }) => {
   )
 }
 
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-] as const
-
-function formatMonthYear(value?: string): string {
+function formatMonthYear(locale: string, value?: string): string {
   if (!value) {
     return ''
   }
@@ -87,18 +73,21 @@ function formatMonthYear(value?: string): string {
   }
 
   const [, year, monthPart] = match
-  const monthIndex = Number(monthPart) - 1
+  const month = Number(monthPart) - 1
 
-  if (monthIndex < 0 || monthIndex >= MONTH_NAMES.length) {
+  if (month < 0 || month >= 12) {
     return value
   }
 
-  return `${MONTH_NAMES[monthIndex]} ${year}`
+  return new Intl.DateTimeFormat(locale, {
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(Number(year), month, 1))
 }
 
-function formatDateRange(startDate?: string, endDate?: string): string {
-  const formattedStart = formatMonthYear(startDate) || 'Start'
-  const formattedEnd = formatMonthYear(endDate) || 'Present'
+function formatDateRange(locale: string, startLabel: string, presentLabel: string, startDate?: string, endDate?: string): string {
+  const formattedStart = formatMonthYear(locale, startDate) || startLabel
+  const formattedEnd = formatMonthYear(locale, endDate) || presentLabel
 
   return `${formattedStart} - ${formattedEnd}`
 }
@@ -170,7 +159,7 @@ function calculateExperienceMonths(experience: CV['experience']): number {
   return mergedRanges.reduce((total, range) => total + (range.end - range.start + 1), 0)
 }
 
-function formatExperienceYearsLabel(value: string): string | null {
+function formatExperienceYearsLabel(locale: string, value: string): string | null {
   const trimmedValue = value.trim()
 
   if (!trimmedValue) {
@@ -184,19 +173,24 @@ function formatExperienceYearsLabel(value: string): string | null {
       ? String(numericValue)
       : numericValue.toFixed(1).replace(/\.0$/, '')
 
-    return `${normalizedValue} ${numericValue === 1 ? 'year' : 'years'} of experience`
+    return formatPreviewExperience(locale === 'ru-RU' ? 'ru' : 'en', normalizedValue)
   }
 
-  return `${trimmedValue} years of experience`
+  return locale === 'ru-RU' ? `${trimmedValue} опыта` : `${trimmedValue} years of experience`
 }
 
-function getExperienceYearsLabel(personalInfo: CV['personalInfo'], experience: CV['experience']): string | null {
+function getExperienceYearsLabel(
+  locale: 'en' | 'ru',
+  personalInfo: CV['personalInfo'],
+  experience: CV['experience'],
+  lessThanOneYearLabel: string,
+): string | null {
   if (personalInfo.experienceYearsMode === 'hidden') {
     return null
   }
 
   if (personalInfo.experienceYearsMode === 'manual') {
-    return formatExperienceYearsLabel(personalInfo.manualExperienceYears || '')
+    return formatExperienceYearsLabel(getIntlLocale(locale), personalInfo.manualExperienceYears || '')
   }
 
   const totalMonths = calculateExperienceMonths(experience)
@@ -206,13 +200,13 @@ function getExperienceYearsLabel(personalInfo: CV['personalInfo'], experience: C
   }
 
   if (totalMonths < 12) {
-    return 'Less than 1 year of experience'
+    return lessThanOneYearLabel
   }
 
   const wholeYears = Math.floor(totalMonths / 12)
   const value = `${wholeYears}${totalMonths % 12 === 0 ? '' : '+'}`
 
-  return `${value} ${wholeYears === 1 ? 'year' : 'years'} of experience`
+  return formatPreviewExperience(locale, value)
 }
 
 function normalizeProjectLink(link: string): string {
@@ -223,9 +217,9 @@ function normalizeProjectLink(link: string): string {
   return /^https?:\/\//i.test(link) ? link : `https://${link}`
 }
 
-function getProjectLabel(link: string): string {
+function getProjectLabel(link: string, fallbackLabel: string): string {
   if (!link) {
-    return 'Project Link'
+    return fallbackLabel
   }
 
   try {
@@ -238,18 +232,32 @@ function getProjectLabel(link: string): string {
   }
 }
 
-const ExperienceItem = ({ exp, className }: { exp: CV['experience'][number]; className?: string }) => (
+const ExperienceItem = ({
+  exp,
+  className,
+  locale,
+  startLabel,
+  presentLabel,
+  t,
+}: {
+  exp: CV['experience'][number]
+  className?: string
+  locale: string
+  startLabel: string
+  presentLabel: string
+  t: (key: string, variables?: Record<string, string | number>) => string
+}) => (
   <div className={className}>
     <div className="flex items-start gap-2.5">
-      <EntryLogo src={exp.logoUrl} alt={`${exp.company || 'Company'} logo`} />
+      <EntryLogo src={exp.logoUrl} alt={`${exp.company || t('preview.placeholders.company')} ${t('preview.labels.projectLogoSuffix')}`} />
       <div className="min-w-0 flex-1">
         <div className="mb-0.5 flex items-baseline justify-between gap-3">
-          <h3 className="text-md font-bold text-gray-800">{exp.position || 'Position'}</h3>
+          <h3 className="text-md font-bold text-gray-800">{exp.position || t('preview.placeholders.position')}</h3>
           <span className="ml-4 whitespace-nowrap text-sm font-medium text-gray-500">
-            {formatDateRange(exp.startDate, exp.endDate)}
+            {formatDateRange(locale, startLabel, presentLabel, exp.startDate, exp.endDate)}
           </span>
         </div>
-        <div className="mb-1.5 text-md font-medium text-blue-600">{exp.company || 'Company Name'}</div>
+        <div className="mb-1.5 text-md font-medium text-blue-600">{exp.company || t('preview.placeholders.company')}</div>
         {exp.description && (
           <div className="cv-long-text">
             <MarkdownContent content={exp.description} className="text-sm text-gray-700" />
@@ -263,17 +271,19 @@ const ExperienceItem = ({ exp, className }: { exp: CV['experience'][number]; cla
 const OpenSourceProjectItem = ({
   project,
   className,
+  t,
 }: {
   project: CV['openSourceProjects'][number]
   className?: string
+  t: (key: string, variables?: Record<string, string | number>) => string
 }) => {
   const projectHref = normalizeProjectLink(project.link)
-  const label = getProjectLabel(project.link)
+  const label = getProjectLabel(project.link, t('preview.placeholders.projectLink'))
 
   return (
     <div className={className}>
       <div className="flex items-start gap-2.5">
-        <EntryLogo src={project.logoUrl} alt={`${label} logo`} />
+        <EntryLogo src={project.logoUrl} alt={`${label} ${t('preview.labels.projectLogoSuffix')}`} />
         <div className="min-w-0 flex-1">
           {projectHref ? (
             <a
@@ -302,18 +312,32 @@ const OpenSourceProjectItem = ({
   )
 }
 
-const EducationItem = ({ edu, className }: { edu: CV['education'][number]; className?: string }) => (
+const EducationItem = ({
+  edu,
+  className,
+  locale,
+  startLabel,
+  presentLabel,
+  t,
+}: {
+  edu: CV['education'][number]
+  className?: string
+  locale: string
+  startLabel: string
+  presentLabel: string
+  t: (key: string, variables?: Record<string, string | number>) => string
+}) => (
   <div className={className}>
     <div className="flex items-start gap-2.5">
-      <EntryLogo src={edu.logoUrl} alt={`${edu.institution || 'Institution'} logo`} />
+      <EntryLogo src={edu.logoUrl} alt={`${edu.institution || t('preview.placeholders.institution')} ${t('preview.labels.projectLogoSuffix')}`} />
       <div className="min-w-0 flex-1">
         <div className="mb-0.5 flex items-baseline justify-between gap-3">
-          <h3 className="text-md font-bold text-gray-800">{edu.degree || 'Degree'}</h3>
+          <h3 className="text-md font-bold text-gray-800">{edu.degree || t('preview.placeholders.degree')}</h3>
           <span className="ml-4 whitespace-nowrap text-sm font-medium text-gray-500">
-            {formatDateRange(edu.startDate, edu.endDate)}
+            {formatDateRange(locale, startLabel, presentLabel, edu.startDate, edu.endDate)}
           </span>
         </div>
-        <div className="mb-1.5 text-md font-medium text-blue-600">{edu.institution || 'Institution Name'}</div>
+        <div className="mb-1.5 text-md font-medium text-blue-600">{edu.institution || t('preview.placeholders.institution')}</div>
         {edu.description && (
           <div className="cv-long-text">
             <MarkdownContent content={edu.description} className="text-sm text-gray-700" />
@@ -325,8 +349,17 @@ const EducationItem = ({ edu, className }: { edu: CV['education'][number]; class
 )
 
 function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode }) {
-  const { personalInfo, experience = [], openSourceProjects = [], education = [], languages = [], skills = [] } = cv
-  const experienceYearsLabel = getExperienceYearsLabel(personalInfo, experience)
+  const { t, locale } = useI18n()
+  const { personalInfo, experience = [], openSourceProjects = [], education = [], languages = [], skillGroups = [] } = cv
+  const intlLocale = getIntlLocale(locale)
+  const experienceYearsLabel = getExperienceYearsLabel(
+    locale,
+    personalInfo,
+    experience,
+    t('preview.labels.lessThanOneYear'),
+  )
+  const startLabel = t('preview.labels.start')
+  const presentLabel = t('preview.labels.present')
 
   const firstExperience = experience[0]
   const remainingExperience = experience.slice(1)
@@ -334,6 +367,8 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
   const remainingOpenSourceProjects = openSourceProjects.slice(1)
   const firstEducation = education[0]
   const remainingEducation = education.slice(1)
+  const visibleSkillGroups = skillGroups.filter((group) => group.skills.length > 0)
+  const renderFlatSkills = visibleSkillGroups.length === 1 && visibleSkillGroups[0].isDefault
 
   return (
     <article
@@ -344,15 +379,15 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
       <header className="cv-page-block flex flex-row items-start space-x-5 border-b-2 border-gray-800 pb-5">
         {personalInfo.photoUrl && (
           <div className={`h-28 w-28 shrink-0 overflow-hidden border-2 border-gray-100 shadow-md ${personalInfo.photoShape === 'square' ? 'rounded-xl' : 'rounded-full'}`}>
-            <img src={personalInfo.photoUrl} alt="Profile" className="h-full w-full object-cover" />
+            <img src={personalInfo.photoUrl} alt={t('preview.placeholders.profilePhotoAlt')} className="h-full w-full object-cover" />
           </div>
         )}
         <div className="flex-1 text-left">
           <h1 className="mb-1.5 text-4xl font-bold uppercase tracking-wider text-gray-900">
-            {personalInfo.fullName || 'Your Name'}
+            {personalInfo.fullName || t('preview.placeholders.fullName')}
           </h1>
           <p className={cn('text-xl font-medium text-blue-600', experienceYearsLabel ? 'mb-1.5' : 'mb-3')}>
-            {personalInfo.jobTitle || 'Job Title'}
+            {personalInfo.jobTitle || t('preview.placeholders.jobTitle')}
           </p>
           {experienceYearsLabel && (
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-gray-500">
@@ -410,7 +445,7 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
                 {personalInfo.linkedin}
               </ContactItem>
             )}
-            {personalInfo.age && <ContactItem icon={<CalendarIcon />}>{personalInfo.age} y.o.</ContactItem>}
+            {personalInfo.age && <ContactItem icon={<CalendarIcon />}>{t('preview.labels.age', { value: personalInfo.age })}</ContactItem>}
             {personalInfo.location && (
               <ContactItem
                 href={`https://maps.google.com/?q=${encodeURIComponent(personalInfo.location)}`}
@@ -428,7 +463,7 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
       {personalInfo.summary && (
         <section className="cv-flow-section cv-page-block min-w-0 w-full">
           <h2 className="mb-2 border-b border-gray-200 pb-0.5 text-lg font-bold uppercase tracking-widest text-gray-900">
-            Professional Summary
+            {t('preview.sections.summary')}
           </h2>
           <div className="cv-long-text">
             <MarkdownContent content={personalInfo.summary} className="text-sm text-gray-700" />
@@ -440,14 +475,29 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
         <section className="cv-flow-section">
           <div className="cv-page-block">
             <h2 className="mb-3 border-b border-gray-200 pb-0.5 text-lg font-bold uppercase tracking-widest text-gray-900">
-              Experience
+              {t('preview.sections.experience')}
             </h2>
-            <ExperienceItem exp={firstExperience} className={remainingExperience.length > 0 ? 'mb-5' : ''} />
+            <ExperienceItem
+              exp={firstExperience}
+              className={remainingExperience.length > 0 ? 'mb-5' : ''}
+              locale={intlLocale}
+              startLabel={startLabel}
+              presentLabel={presentLabel}
+              t={t}
+            />
           </div>
           {remainingExperience.length > 0 && (
             <div className="cv-entry-list">
               {remainingExperience.map((exp) => (
-                <ExperienceItem key={exp.id} exp={exp} className="cv-page-block" />
+                <ExperienceItem
+                  key={exp.id}
+                  exp={exp}
+                  className="cv-page-block"
+                  locale={intlLocale}
+                  startLabel={startLabel}
+                  presentLabel={presentLabel}
+                  t={t}
+                />
               ))}
             </div>
           )}
@@ -458,17 +508,18 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
         <section className="cv-flow-section">
           <div className="cv-page-block">
             <h2 className="mb-3 border-b border-gray-200 pb-0.5 text-lg font-bold uppercase tracking-widest text-gray-900">
-              Open Source Projects
+              {t('preview.sections.projects')}
             </h2>
             <OpenSourceProjectItem
               project={firstOpenSourceProject}
               className={remainingOpenSourceProjects.length > 0 ? 'mb-5' : ''}
+              t={t}
             />
           </div>
           {remainingOpenSourceProjects.length > 0 && (
             <div className="cv-entry-list">
               {remainingOpenSourceProjects.map((project) => (
-                <OpenSourceProjectItem key={project.id} project={project} className="cv-page-block" />
+                <OpenSourceProjectItem key={project.id} project={project} className="cv-page-block" t={t} />
               ))}
             </div>
           )}
@@ -479,14 +530,29 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
         <section className="cv-flow-section">
           <div className="cv-page-block">
             <h2 className="mb-3 border-b border-gray-200 pb-0.5 text-lg font-bold uppercase tracking-widest text-gray-900">
-              Education
+              {t('preview.sections.education')}
             </h2>
-            <EducationItem edu={firstEducation} className={remainingEducation.length > 0 ? 'mb-5' : ''} />
+            <EducationItem
+              edu={firstEducation}
+              className={remainingEducation.length > 0 ? 'mb-5' : ''}
+              locale={intlLocale}
+              startLabel={startLabel}
+              presentLabel={presentLabel}
+              t={t}
+            />
           </div>
           {remainingEducation.length > 0 && (
             <div className="cv-entry-list">
               {remainingEducation.map((edu) => (
-                <EducationItem key={edu.id} edu={edu} className="cv-page-block" />
+                <EducationItem
+                  key={edu.id}
+                  edu={edu}
+                  className="cv-page-block"
+                  locale={intlLocale}
+                  startLabel={startLabel}
+                  presentLabel={presentLabel}
+                  t={t}
+                />
               ))}
             </div>
           )}
@@ -496,7 +562,7 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
       {languages.length > 0 && (
         <section className="cv-flow-section cv-page-block min-w-0 w-full">
           <h2 className="mb-3 border-b border-gray-200 pb-0.5 text-lg font-bold uppercase tracking-widest text-gray-900">
-            Languages
+            {t('preview.sections.languages')}
           </h2>
           <div className="flex min-w-0 w-full flex-wrap gap-1.5 text-sm leading-tight text-gray-800">
             {languages.map((language) => (
@@ -513,21 +579,45 @@ function CVHtmlDocument({ cv, mode = 'preview' }: { cv: CV; mode?: RenderMode })
         </section>
       )}
 
-      {skills.length > 0 && (
+      {visibleSkillGroups.length > 0 && (
         <section className="cv-flow-section cv-page-block min-w-0 w-full">
-          <h2 className="mb-3 border-b border-gray-200 pb-0.5 text-lg font-bold uppercase tracking-widest text-gray-900">
-            Skills
+          <h2 className="mb-2 border-b border-gray-200 pb-0.5 text-lg font-bold uppercase tracking-widest text-gray-900">
+            {t('preview.sections.skills')}
           </h2>
-          <div className="flex min-w-0 w-full flex-wrap gap-1.5 text-sm leading-tight text-gray-800">
-            {skills.map((skill) => (
-              <span
-                key={skill.id}
-                className="inline-flex max-w-full items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-0.5 font-medium text-blue-700"
-              >
-                <span className="break-words">{skill.name}</span>
-              </span>
-            ))}
-          </div>
+          {renderFlatSkills ? (
+            <div className="flex min-w-0 w-full flex-wrap gap-1 text-xs leading-tight text-gray-800">
+              {visibleSkillGroups[0].skills.map((skill) => (
+                <span
+                  key={skill.id}
+                  className="inline-flex max-w-full items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-medium text-blue-700"
+                >
+                  <span className="break-words">{skill.name}</span>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {visibleSkillGroups.map((group) => (
+                <div key={group.id} className="min-w-0">
+                  {!group.isDefault && (
+                    <h3 className="mb-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-900">
+                      {group.name}
+                    </h3>
+                  )}
+                  <div className="flex min-w-0 w-full flex-wrap gap-1 text-xs leading-tight text-gray-800">
+                    {group.skills.map((skill) => (
+                      <span
+                        key={skill.id}
+                        className="inline-flex max-w-full items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 font-medium text-blue-700"
+                      >
+                        <span className="break-words">{skill.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </article>

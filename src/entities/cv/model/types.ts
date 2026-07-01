@@ -1,3 +1,5 @@
+import type { LocaleCode } from '@/shared/i18n'
+
 export type ExperienceYearsMode = 'hidden' | 'auto' | 'manual'
 
 export interface PersonalInfo {
@@ -33,6 +35,13 @@ export interface Skill {
   name: string
 }
 
+export interface SkillGroup {
+  id: string
+  name: string
+  skills: Skill[]
+  isDefault?: boolean
+}
+
 export interface Language {
   id: string
   name: string
@@ -62,5 +71,17 @@ export interface CV {
   openSourceProjects: OpenSourceProject[]
   education: Education[]
   languages: Language[]
-  skills: Skill[]
+  skillGroups: SkillGroup[]
+}
+
+export interface CVVersion {
+  id: string
+  locale: LocaleCode
+  sourceVersionId?: string | null
+  cv: CV
+}
+
+export interface CVWorkspace {
+  versions: CVVersion[]
+  activeVersionId: string
 }

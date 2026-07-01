@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { personalInfoSchema } from '@/entities/cv/model/schema'
+import { createPersonalInfoSchema } from '@/entities/cv/model/schema'
+import { selectActiveCV, selectActiveVersion } from '@/entities/cv/model/selectors'
 import { useCVStore } from '@/entities/cv/model/store'
 import { Input } from '@/shared/ui/Input'
 import { Label } from '@/shared/ui/Label'
@@ -9,21 +10,42 @@ import { PersonalInfo } from '@/entities/cv/model/types'
 import { Upload, X } from 'lucide-react'
 import { ImageCropper } from './ImageCropper'
 import { RichTextEditor } from '@/shared/ui/RichTextEditor'
+import { useI18n } from '@/shared/i18n'
 
 export const EditPersonalInfo = () => {
+  const { t } = useI18n()
   const setPersonalInfo = useCVStore((state) => state.setPersonalInfo)
-  const initialValues = useCVStore((state) => state.cv.personalInfo)
+  const initialValues = useCVStore((state) => selectActiveCV(state).personalInfo)
+  const activeVersionId = useCVStore((state) => selectActiveVersion(state)?.id)
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null)
+  const schema = useMemo(
+    () =>
+      createPersonalInfoSchema({
+        nameMin: t('personalInfo.validation.nameMin'),
+        jobTitleMin: t('personalInfo.validation.jobTitleMin'),
+        invalidEmail: t('personalInfo.validation.invalidEmail'),
+      }),
+    [t],
+  )
 
   const {
     register,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<PersonalInfo>({
-    resolver: zodResolver(personalInfoSchema),
+    resolver: zodResolver(schema),
     defaultValues: initialValues,
   })
+
+  useEffect(() => {
+    const currentVersion = useCVStore.getState().workspace.versions.find((version) => version.id === activeVersionId)
+
+    if (currentVersion) {
+      reset(currentVersion.cv.personalInfo)
+    }
+  }, [activeVersionId, reset])
 
   // Subscribe to form changes and sync to store without causing re-renders
   useEffect(() => {
@@ -64,22 +86,22 @@ export const EditPersonalInfo = () => {
   const experienceYearsMode = watch('experienceYearsMode') || 'auto'
 
   return (
-    <div className="space-y-4 p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-      <h2 className="text-xl font-semibold text-gray-800">Personal Information</h2>
+    <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+      <h2 className="text-xl font-semibold text-gray-800">{t('personalInfo.title')}</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2 md:col-span-2 flex items-center gap-4 mb-2">
-          <div className={`w-20 h-20 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-gray-50 shrink-0 ${currentPhotoShape === 'square' ? 'rounded-md' : 'rounded-full'}`}>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="mb-2 flex items-center gap-4 space-y-2 md:col-span-2">
+          <div className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 bg-gray-50 ${currentPhotoShape === 'square' ? 'rounded-md' : 'rounded-full'}`}>
             {currentPhotoUrl ? (
-              <img src={currentPhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+              <img src={currentPhotoUrl} alt={t('preview.placeholders.profilePhotoAlt')} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-gray-400 text-xs text-center px-2">No Photo</span>
+              <span className="px-2 text-center text-xs text-gray-400">{t('personalInfo.noPhoto')}</span>
             )}
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="photoUpload" className="cursor-pointer bg-white border border-gray-300 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50 inline-flex items-center justify-center gap-2 w-fit transition-colors">
-              <Upload className="w-4 h-4" />
-              Upload Photo
+            <Label htmlFor="photoUpload" className="inline-flex w-fit cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-gray-50">
+              <Upload className="h-4 w-4" />
+              {t('personalInfo.uploadPhoto')}
             </Label>
             <input
               id="photoUpload"
@@ -92,22 +114,22 @@ export const EditPersonalInfo = () => {
               <button
                 type="button"
                 onClick={handleRemovePhoto}
-                className="text-sm text-red-500 hover:text-red-700 text-left inline-flex items-center gap-1 transition-colors"
+                className="inline-flex items-center gap-1 text-left text-sm text-red-500 transition-colors hover:text-red-700"
               >
-                <X className="w-3 h-3" />
-                Remove Photo
+                <X className="h-3 w-3" />
+                {t('personalInfo.removePhoto')}
               </button>
             )}
           </div>
-          <div className="flex flex-col gap-1 ml-4 border-l pl-4 border-gray-200">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Shape</span>
+          <div className="ml-4 flex flex-col gap-1 border-l border-gray-200 pl-4">
+            <span className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-500">{t('personalInfo.shape')}</span>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="radio" value="round" {...register('photoShape')} className="text-blue-600 focus:ring-blue-500" />
-              Round
+              {t('personalInfo.round')}
             </label>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="radio" value="square" {...register('photoShape')} className="text-blue-600 focus:ring-blue-500" />
-              Square
+              {t('personalInfo.square')}
             </label>
           </div>
         </div>
@@ -122,92 +144,92 @@ export const EditPersonalInfo = () => {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name</Label>
-          <Input id="fullName" placeholder="John Doe" {...register('fullName')} />
+          <Label htmlFor="fullName">{t('personalInfo.fullName')}</Label>
+          <Input id="fullName" placeholder={t('personalInfo.placeholders.fullName')} {...register('fullName')} />
           {errors.fullName && <p className="text-sm text-red-500">{errors.fullName.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="jobTitle">Job Title</Label>
-          <Input id="jobTitle" placeholder="Frontend Developer" {...register('jobTitle')} />
+          <Label htmlFor="jobTitle">{t('personalInfo.jobTitle')}</Label>
+          <Input id="jobTitle" placeholder={t('personalInfo.placeholders.jobTitle')} {...register('jobTitle')} />
           {errors.jobTitle && <p className="text-sm text-red-500">{errors.jobTitle.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="john@example.com" {...register('email')} />
+          <Label htmlFor="email">{t('personalInfo.email')}</Label>
+          <Input id="email" type="email" placeholder={t('personalInfo.placeholders.email')} {...register('email')} />
           {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" placeholder="+1 234 567 890" {...register('phone')} />
+          <Label htmlFor="phone">{t('personalInfo.phone')}</Label>
+          <Input id="phone" placeholder={t('personalInfo.placeholders.phone')} {...register('phone')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="whatsapp">WhatsApp</Label>
-          <Input id="whatsapp" placeholder="+1 234 567 890" {...register('whatsapp')} />
+          <Label htmlFor="whatsapp">{t('personalInfo.whatsapp')}</Label>
+          <Input id="whatsapp" placeholder={t('personalInfo.placeholders.phone')} {...register('whatsapp')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="telegram">Telegram</Label>
-          <Input id="telegram" placeholder="@username" {...register('telegram')} />
+          <Label htmlFor="telegram">{t('personalInfo.telegram')}</Label>
+          <Input id="telegram" placeholder={t('personalInfo.placeholders.telegram')} {...register('telegram')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="github">GitHub</Label>
-          <Input id="github" placeholder="github.com/username" {...register('github')} />
+          <Label htmlFor="github">{t('personalInfo.github')}</Label>
+          <Input id="github" placeholder={t('personalInfo.placeholders.github')} {...register('github')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="linkedin">LinkedIn</Label>
-          <Input id="linkedin" placeholder="linkedin.com/in/username" {...register('linkedin')} />
+          <Label htmlFor="linkedin">{t('personalInfo.linkedin')}</Label>
+          <Input id="linkedin" placeholder={t('personalInfo.placeholders.linkedin')} {...register('linkedin')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="age">Age</Label>
-          <Input id="age" type="number" placeholder="25" {...register('age')} />
+          <Label htmlFor="age">{t('personalInfo.age')}</Label>
+          <Input id="age" type="number" placeholder={t('personalInfo.placeholders.age')} {...register('age')} />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="experienceYearsMode">Experience Years</Label>
+          <Label htmlFor="experienceYearsMode">{t('personalInfo.experienceYears')}</Label>
           <select
             id="experienceYearsMode"
             {...register('experienceYearsMode')}
             className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           >
-            <option value="hidden">Do not show</option>
-            <option value="auto">Calculate from experience</option>
-            <option value="manual">Enter manually</option>
+            <option value="hidden">{t('personalInfo.doNotShow')}</option>
+            <option value="auto">{t('personalInfo.calculateFromExperience')}</option>
+            <option value="manual">{t('personalInfo.enterManually')}</option>
           </select>
         </div>
 
         {experienceYearsMode === 'manual' && (
           <div className="space-y-2">
-            <Label htmlFor="manualExperienceYears">Manual Experience Years</Label>
+            <Label htmlFor="manualExperienceYears">{t('personalInfo.manualExperienceYears')}</Label>
             <Input
               id="manualExperienceYears"
               type="number"
               step="0.5"
               min="0"
-              placeholder="5"
+              placeholder={t('personalInfo.placeholders.manualExperienceYears')}
               {...register('manualExperienceYears')}
             />
           </div>
         )}
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="location">Location</Label>
-          <Input id="location" placeholder="New York, USA" {...register('location')} />
+          <Label htmlFor="location">{t('personalInfo.location')}</Label>
+          <Input id="location" placeholder={t('personalInfo.placeholders.location')} {...register('location')} />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="summary">Summary</Label>
+          <Label htmlFor="summary">{t('personalInfo.summary')}</Label>
           <RichTextEditor
             id="summary"
             value={summaryValue || ''}
             onChange={(val) => setValue('summary', val, { shouldDirty: true })}
-            placeholder="A brief summary about yourself..."
+            placeholder={t('personalInfo.placeholders.summary')}
             minHeight={100}
           />
         </div>
